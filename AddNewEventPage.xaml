@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CountdownCollection.AddNewEventPage" >
+
+    <ContentPage.Content>
+        <StackLayout x:Name="stack" BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Spacing="0" >
+            <Label BackgroundColor="White" HorizontalOptions="FillAndExpand" />
+
+            <Image x:Name="LogoWithName" Aspect="AspectFit" Source="LogoWithName.png" BackgroundColor="#0000dc" Margin="0,5,0,5" />
+
+            <StackLayout BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" >
+                <StackLayout Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
+                    <Entry x:Name="entryName" Placeholder="Event Name" HorizontalOptions="FillAndExpand" VerticalOptions="CenterAndExpand" />
+                </StackLayout>
+
+                <StackLayout Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
+                    <Label Text="Date" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
+                    <DatePicker x:Name="datePicked" HorizontalOptions="FillAndExpand" BackgroundColor="Gray" />
+                </StackLayout>
+
+                <StackLayout Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
+                    <Label Text="One Time Event" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
+                    <Switch x:Name="oneTimeSwitch" HorizontalOptions="EndAndExpand" Toggled="oneTimeSwitchChanged" IsToggled="False" />
+                </StackLayout>
+            </StackLayout>
+
+            <StackLayout Orientation="Horizontal" VerticalOptions="EndAndExpand" >
+                <Button Text="Add Event" 
+                    TextColor="Black"
+                    FontAttributes="Bold"
+                    BackgroundColor="DarkGray"
+                    Clicked="addEvent" 
+                    HeightRequest="50" 
+                    HorizontalOptions="FillAndExpand" 
+                    VerticalOptions="EndAndExpand" />
+
+                <Button Text="Cancel" 
+                    TextColor="Black"
+                    FontAttributes="Bold"
+                    BackgroundColor="DarkGray"
+                    Clicked="cancel" 
+                    HeightRequest="50" 
+                    HorizontalOptions="FillAndExpand" 
+                    VerticalOptions="EndAndExpand" />
+            </StackLayout>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

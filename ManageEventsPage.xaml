@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:CountdownCollection" 
+             x:Class="CountdownCollection.ManageEventsPage" >
+
+    <ContentPage.Content>
+        <StackLayout x:Name="stack" BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Spacing="0" >
+            <Label BackgroundColor="White" HorizontalOptions="FillAndExpand" />
+
+            <Image x:Name="LogoWithName" Aspect="AspectFit" Source="LogoWithName.png" BackgroundColor="#0000dc" Margin="0,5,0,5" />
+
+            <StackLayout Orientation="Horizontal" Margin="0,0,0,5" >
+                <Button x:Name="storedEventsButton"
+                        Text="Stored Events" 
+                        TextColor="Black"
+                        FontAttributes="Bold"
+                        BackgroundColor="LightSteelBlue"
+                        Clicked="changeToStoredEvents" 
+                        HeightRequest="50"
+                        HorizontalOptions="FillAndExpand" 
+                        VerticalOptions="EndAndExpand"  />
+
+                <Button x:Name="myEventsButton"
+                        Text="Custom Events" 
+                        TextColor="Black"
+                        FontAttributes="Bold"
+                        BackgroundColor="DarkGray"
+                        Clicked="changeToMyEvents" 
+                        HeightRequest="50" 
+                        HorizontalOptions="FillAndExpand" 
+                        VerticalOptions="EndAndExpand"  />
+            </StackLayout>
+
+            <ScrollView x:Name="scrollView" >
+                <Grid HorizontalOptions="FillAndExpand" x:Name="storedEventsGrid" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+                </Grid>
+            </ScrollView>
+
+            <StackLayout VerticalOptions="EndAndExpand" Padding="0,5,0,0" >
+                <Button Text="Done" 
+                        TextColor="Black"
+                        FontAttributes="Bold"
+                        BackgroundColor="DarkGray"
+                        Clicked="done" 
+                        HeightRequest="50" 
+                        HorizontalOptions="FillAndExpand"  />
+            </StackLayout>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

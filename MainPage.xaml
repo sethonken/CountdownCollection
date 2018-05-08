@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:CountdownCollection" 
+             x:Class="CountdownCollection.MainPage"
+             BackgroundColor="#0000dc" >
+
+    <StackLayout x:Name="animationStack" BackgroundColor="Black" HorizontalOptions="FillAndExpand" Opacity="0" />
+
+    <Image x:Name="LogoWithName" Aspect="AspectFill" Source="LogoWithName.png" />
+
+    <StackLayout x:Name="mainStack" BackgroundColor="Black" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Spacing="0" >
+        <StackLayout>
+            <Label x:Name="utilitiesPadding" BackgroundColor="White" HorizontalOptions="FillAndExpand" Opacity="0" HeightRequest="0" />
+        </StackLayout>
+
+        <Image Aspect="AspectFill" Source="LogoWithName.png" BackgroundColor="#0000dc" Margin="0,5,0,5" />
+
+        <StackLayout x:Name="gridStack" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Opacity="0" >
+            <Grid x:Name="grid1" BackgroundColor="DarkGray" HorizontalOptions="FillAndExpand" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="9*"/>
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="14" />
+                </Grid.RowDefinitions>
+                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="0" Text="(//)" x:Name="currentDate" />
+                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="1" Text="Days" />
+                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="2" Text="Hours" />
+                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="3" Text="Mins"  />
+                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="4" Text="Secs" />
+            </Grid>
+
+            <ScrollView>
+                <Grid x:Name="grid2" HorizontalOptions="FillAndExpand" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="9*"/>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                </Grid>
+            </ScrollView>
+
+            <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="EndAndExpand" >
+                <Button Text="Add New Event" 
+                            TextColor="Black"
+                            FontAttributes="Bold"
+                            BackgroundColor="DarkGray"
+                            Clicked="addNewEvent" 
+                            HeightRequest="50" 
+                            HorizontalOptions="FillAndExpand" 
+                            VerticalOptions="EndAndExpand" />
+
+                <Button Text="Manage Events" 
+                                TextColor="Black"
+                                FontAttributes="Bold"
+                                BackgroundColor="DarkGray"
+                                Clicked="manageEvents" 
+                                HeightRequest="50" 
+                                HorizontalOptions="FillAndExpand" 
+                                VerticalOptions="EndAndExpand" />
+            </StackLayout>
+        </StackLayout>
+    </StackLayout>
+</ContentPage>
