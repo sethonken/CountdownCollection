@@ -1,4 +1,7 @@
 ﻿<Event>
+	<Name=Chinese New Year>
+</Event>
+<Event>
 	<Name=Christmas>
 	<Month=12>
 	<Day=25>
@@ -37,10 +40,14 @@
 	<Day=22>
 </Event>
 <Event>
+	<Name=Easter>
+	<Visible=True>
+</Event>
+<Event>
 	<Name=Father's Day>
 	<Month=6>
 	<Day=1>
-    <Visible=True>
+	<Visible=True>
 </Event>
 <Event>
 	<Name=Flag Day>
@@ -51,6 +58,9 @@
 	<Name=Friday the 13th>
 	<Month=1>
 	<Day=1>
+</Event>
+<Event>
+	<Name=Full Moon>
 </Event>
 <Event>
 	<Name=Groundhog Day>
@@ -78,7 +88,9 @@
 	<Name=Leap Day>
 	<Month=2>
 	<Day=28>
-	<Visible=True>
+</Event>
+<Event>
+	<Name=Mardi Gras>
 </Event>
 <Event>
 	<Name=Martin Luther King Jr. Day>
@@ -89,13 +101,15 @@
 	<Name=Memorial Day>
 	<Month=5>
 	<Day=31>
-	<Visible=True>
 </Event>
 <Event>
 	<Name=Mother's Day>
 	<Month=5>
 	<Day=1>
 	<Visible=True>
+</Event>
+<Event>
+	<Name=New Moon>
 </Event>
 <Event>
 	<Name=New Year's Day>
@@ -112,6 +126,7 @@
 	<Name=St. Patrick's Day>
 	<Month=3>
 	<Day=17>
+	<Visible=True>
 </Event>
 <Event>
 	<Name=Thanksgiving>
@@ -124,4 +139,9 @@
 	<Month=2>
 	<Day=14>
 	<Visible=True>
+</Event>
+<Event>
+	<Name=Veterans Day>
+	<Month=11>
+	<Day=11>
 </Event>

@@ -29,11 +29,11 @@
                         Clicked="changeToMyEvents" 
                         HeightRequest="50" 
                         HorizontalOptions="FillAndExpand" 
-                        VerticalOptions="EndAndExpand"  />
+                        VerticalOptions="EndAndExpand" />
             </StackLayout>
 
-            <ScrollView x:Name="scrollView" >
-                <Grid HorizontalOptions="FillAndExpand" x:Name="storedEventsGrid" >
+            <ScrollView x:Name="scrollView" VerticalOptions="FillAndExpand" >
+                <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"  x:Name="storedEventsGrid" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30"/>
                         <ColumnDefinition Width="3*"/>
@@ -42,7 +42,52 @@
                 </Grid>
             </ScrollView>
 
-            <StackLayout VerticalOptions="EndAndExpand" Padding="0,5,0,0" >
+            <StackLayout VerticalOptions="End" Padding="0,5,0,0" Spacing="2" >
+                <StackLayout Orientation="Vertical" BackgroundColor="Black" Spacing="5" >
+                    <StackLayout Orientation="Horizontal" >
+                        <Button Text="Select All" 
+                            TextColor="Black"
+                            Clicked="selectAll" 
+                            FontAttributes="Bold"
+                            BackgroundColor="White"
+                            VerticalOptions="EndAndExpand"
+                            HeightRequest="40" 
+                            HorizontalOptions="FillAndExpand"  />
+
+                        <Button Text="Unselect All" 
+                            TextColor="Black"
+                            Clicked="unselectAll" 
+                            FontAttributes="Bold"
+                            BackgroundColor="White"
+                            VerticalOptions="EndAndExpand"
+                            HeightRequest="40" 
+                            HorizontalOptions="FillAndExpand"  />
+                    </StackLayout>
+                    
+                    <StackLayout Padding="0,0,0,2" >
+                        <Button x:Name="restoreDefaultsButton"
+                            Text="Restore Defaults" 
+                            TextColor="Black"
+                            Clicked="restoreDefaults" 
+                            FontAttributes="Bold"
+                            BackgroundColor="White"
+                            VerticalOptions="EndAndExpand"
+                            HeightRequest="40" 
+                            HorizontalOptions="FillAndExpand" />
+
+                        <Button x:Name="deleteAllButton"
+                            Text="Delete All" 
+                            TextColor="Black"
+                            Clicked="deleteAll" 
+                            FontAttributes="Bold"
+                            BackgroundColor="White"
+                            VerticalOptions="EndAndExpand"
+                            HeightRequest="40" 
+                            HorizontalOptions="FillAndExpand" 
+                            IsVisible="False" />
+                    </StackLayout>
+                </StackLayout>
+                
                 <Button Text="Done" 
                         TextColor="Black"
                         FontAttributes="Bold"

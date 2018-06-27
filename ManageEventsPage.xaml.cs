@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -16,6 +15,8 @@ namespace CountdownCollection {
         bool storedEventsSelected;
         bool myEventsSelected;
         Grid myEventsGrid;
+
+        ActivityIndicator selectingIndicator;
 
         public ManageEventsPage() {
             InitializeComponent();
@@ -29,18 +30,177 @@ namespace CountdownCollection {
             //initialize myEventsGrid
             myEventsGrid = new Grid();
             myEventsGrid.HorizontalOptions = LayoutOptions.FillAndExpand;
+            myEventsGrid.VerticalOptions = LayoutOptions.Start;
             myEventsGrid.ColumnDefinitions = storedEventsGrid.ColumnDefinitions;
 
+            //initialize indicator for selecting mass switches
+            selectingIndicator = new ActivityIndicator();
+            selectingIndicator.HorizontalOptions = LayoutOptions.FillAndExpand;
+            selectingIndicator.VerticalOptions = LayoutOptions.Center;
+            selectingIndicator.Color = Color.White;
+            selectingIndicator.BackgroundColor = Color.Black;
+            selectingIndicator.IsEnabled = true;
+            selectingIndicator.IsRunning = true;
+
+            populateGrids();
+        }
+
+        public void populateGrids() {
             populateStoredEventsGrid();
             populateMyEventsGrid();
         }
 
-        public void done(object sender, EventArgs e) {
-            FileHandler fileHandler = new FileHandler();
-            fileHandler.updateStoredEventsFile();
-            fileHandler.updateMyEventsFile();
-            mainPage.populateGrid();
-            Navigation.PopModalAsync();
+        public async void done(object sender, EventArgs e) {
+            displayActivityIndicator();
+
+            await Task.Run(() => {
+                FileHandler fileHandler = new FileHandler();
+                fileHandler.updateStoredEventsFile();
+                fileHandler.updateMyEventsFile();
+
+                Device.BeginInvokeOnMainThread(() => {
+                    mainPage.populateGrid();
+                    Navigation.PopModalAsync();
+                });
+            });
+        }
+
+        public void displayActivityIndicator() {
+            var utilPadding = new Label {
+                BackgroundColor = Color.White,
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                HeightRequest = mainPage.getUtilPaddingHeight()
+            };
+
+            var logoBanner = new Image {
+                Aspect = Aspect.AspectFit,
+                Source = "LogoWithName.png",
+                BackgroundColor = Color.FromHex("#0000dc"),
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+
+            var indicator = new ActivityIndicator() {
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                Color = Color.White,
+                BackgroundColor = Color.Black,
+                IsEnabled = true,
+                IsRunning = true
+            };
+
+            var root = new StackLayout() {
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                Spacing = 0,
+                BackgroundColor = Color.Black,
+                Children = {
+                    utilPadding,
+                    logoBanner,
+                    indicator
+                }
+            };
+
+            Content = root;
+        }
+
+        public void displaySelectingIndicator() {
+            Device.BeginInvokeOnMainThread(() => {
+                scrollView.Content = selectingIndicator;
+            });
+        }
+
+        public async void selectAll(object sender, EventArgs e) {
+            if (myEventsSelected && myEventsGrid.Children.Count == 0) {
+                return;
+            }
+
+            Device.BeginInvokeOnMainThread(() => {
+                displaySelectingIndicator();
+            });
+
+            await Task.Run(() => {
+                Thread.Sleep(400);
+                if (storedEventsSelected) {
+                    for (int i = 0; i < GlobalVariables.storedEvents.Count(); i++) {
+                        GlobalVariables.storedEvents[i].setVisible();
+                    }
+                    Device.BeginInvokeOnMainThread(() => {
+                        populateStoredEventsGrid();
+                        scrollView.Content = storedEventsGrid;
+                    });
+                }
+                else if (myEventsSelected) {
+                    for (int i = 0; i < GlobalVariables.myEvents.Count(); i++) {
+                        GlobalVariables.myEvents[i].setVisible();
+                    }
+                    Device.BeginInvokeOnMainThread(() => {
+                        populateMyEventsGrid();
+                        scrollView.Content = myEventsGrid;
+                    });
+                }
+            });
+        }
+
+        public async void unselectAll(object sender, EventArgs e) {
+            if (myEventsSelected && myEventsGrid.Children.Count == 0) {
+                return;
+            }
+
+            Device.BeginInvokeOnMainThread(() => {
+                displaySelectingIndicator();
+            });
+
+            await Task.Run(() => {
+                Thread.Sleep(400);
+                if (storedEventsSelected) {
+                    for (int i = 0; i < GlobalVariables.storedEvents.Count(); i++) {
+                        GlobalVariables.storedEvents[i].setInvisible();
+                    }
+                    Device.BeginInvokeOnMainThread(() => {
+                        populateStoredEventsGrid();
+                        scrollView.Content = storedEventsGrid;
+                    });
+                }
+                else if (myEventsSelected) {
+                    for (int i = 0; i < GlobalVariables.myEvents.Count(); i++) {
+                        GlobalVariables.myEvents[i].setInvisible();
+                    }
+                    Device.BeginInvokeOnMainThread(() => {
+                        populateMyEventsGrid();
+                        scrollView.Content = myEventsGrid;
+                    });
+                }
+            });
+        }
+
+        public async void restoreDefaults(object sender, EventArgs e) {
+            Device.BeginInvokeOnMainThread(() => {
+                displaySelectingIndicator();
+            });
+
+            await Task.Run(() => {
+                Thread.Sleep(400);
+                FileHandler fileHandler = new FileHandler();
+                fileHandler.resetStoredEventsFile();
+                mainPage.initializeStoredEvents();
+                Device.BeginInvokeOnMainThread(() => {
+                    populateStoredEventsGrid();
+                    scrollView.Content = storedEventsGrid;
+                });
+            });
+        }
+
+        public async void deleteAll(object sender, EventArgs e) {
+            if (myEventsGrid.Children.Count == 0) {
+                return;
+            }
+            bool x = await DisplayAlert("Are you sure?", "All of your custom events will be deleted.", "Delete", "Cancel");
+            if (x) {
+                FileHandler fileHandler = new FileHandler();
+                fileHandler.resetMyEventsFile();
+                mainPage.initializeMyEvents();
+                populateMyEventsGrid();
+            }
         }
 
         public void changeToStoredEvents(object sender, EventArgs e) {
@@ -53,6 +213,8 @@ namespace CountdownCollection {
             if (!storedEventsSelected) {
                 storedEventsSelected = true;
                 scrollView.Content = storedEventsGrid;
+                deleteAllButton.IsVisible = false;
+                restoreDefaultsButton.IsVisible = true;
             }
         }
 
@@ -66,11 +228,42 @@ namespace CountdownCollection {
             if (!myEventsSelected) {
                 myEventsSelected = true;
                 scrollView.Content = myEventsGrid;
+                restoreDefaultsButton.IsVisible = false;
+                deleteAllButton.IsVisible = true;
+            }
+        }
+
+        public async void DeleteButton_Clicked(object sender, EventArgs e) {
+            bool x = await DisplayAlert("Are you sure?", "\"" + GlobalVariables.eventToBeDeleted + "\" will be deleted.", "Delete", "Cancel");
+            if (x) {
+                Device.BeginInvokeOnMainThread(() => {
+                    displaySelectingIndicator();
+                });
+
+                await Task.Run(() => {
+                    Thread.Sleep(400);
+                    for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
+                        if (GlobalVariables.myEvents[i].getName().Equals(GlobalVariables.eventToBeDeleted)) {
+                            GlobalVariables.myEvents.RemoveAt(i);
+                            Device.BeginInvokeOnMainThread(() => {
+                                populateMyEventsGrid();
+                                scrollView.Content = myEventsGrid;
+                            });
+
+                            //remove event from saved file
+                            FileHandler fileHandler = new FileHandler();
+                            fileHandler.updateMyEventsFile();
+
+                            return;
+                        }
+                    }
+                });
             }
         }
 
         public void populateStoredEventsGrid() {
-            //sort events based on name
+            storedEventsGrid.Children.Clear();
+
             GlobalVariables.storedEvents.Sort((x, y) => x.getName().CompareTo(y.getName()));
 
             //add events to grid
@@ -94,7 +287,7 @@ namespace CountdownCollection {
                 eventLabel.TextColor = Color.Black;
 
                 Label dateLabel = new Label();
-                dateLabel.Text = "(" + currentEvent.getDate().Month + "/" + currentEvent.getDate().Day + "/" + currentEvent.getDate().Year + ")";
+                dateLabel.Text = currentEvent.getDate().ToString("MMMM d, yyyy");
                 dateLabel.HorizontalOptions = Xamarin.Forms.LayoutOptions.Start;
                 dateLabel.VerticalOptions = Xamarin.Forms.LayoutOptions.StartAndExpand;
                 dateLabel.FontSize = 13;
@@ -125,8 +318,7 @@ namespace CountdownCollection {
         public void populateMyEventsGrid() {
             myEventsGrid.Children.Clear();
 
-            //sort events based on name
-            GlobalVariables.myEvents.Sort((x, y) => x.getName().CompareTo(y.getName()));
+            GlobalVariables.storedEvents.Sort((x, y) => x.getName().CompareTo(y.getName()));
 
             //add events to grid
             int row = 0;
@@ -158,14 +350,14 @@ namespace CountdownCollection {
 
                 Label eventLabel = new Label();
                 eventLabel.Text = currentEvent.getName();
-                eventLabel.HorizontalTextAlignment = TextAlignment.Center;
+                eventLabel.HorizontalTextAlignment = TextAlignment.Start;
                 eventLabel.HorizontalOptions = Xamarin.Forms.LayoutOptions.Start;
                 eventLabel.VerticalOptions = Xamarin.Forms.LayoutOptions.EndAndExpand;
                 eventLabel.FontSize = 16;
                 eventLabel.TextColor = Color.Black;
 
                 Label dateLabel = new Label();
-                dateLabel.Text = "(" + currentEvent.getDate().Month + "/" + currentEvent.getDate().Day + "/" + currentEvent.getDate().Year + ")";
+                dateLabel.Text = currentEvent.getDate().ToString("MMMM d, yyyy");
                 dateLabel.HorizontalOptions = Xamarin.Forms.LayoutOptions.Start;
                 dateLabel.VerticalOptions = Xamarin.Forms.LayoutOptions.StartAndExpand;
                 dateLabel.FontSize = 13;
@@ -192,19 +384,6 @@ namespace CountdownCollection {
                 myEventsGrid.Children.Add(visibleSwitch, 2, row);
 
                 row++;
-            }
-        }
-
-        public async void DeleteButton_Clicked(object sender, EventArgs e) {
-            bool x = await DisplayAlert("Are you sure?", "\"" + GlobalVariables.eventToBeDeleted + "\" will be deleted.", "Yes", "No");
-            if (x) {
-                for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
-                    if (GlobalVariables.myEvents[i].getName().Equals(GlobalVariables.eventToBeDeleted)) {
-                        GlobalVariables.myEvents.RemoveAt(i);
-                        populateMyEventsGrid();
-                        return;
-                    }
-                }
             }
         }
     }

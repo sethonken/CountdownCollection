@@ -5,12 +5,15 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Windows.Storage;
+using Windows.UI.Core;
 using Xamarin.Forms;
 
 namespace CountdownCollection {
     public class FileHandler {
-        public FileHandler() {
+        public bool saving;
 
+        public FileHandler() {
+            saving = false;
         }
 
         /*
@@ -86,12 +89,6 @@ namespace CountdownCollection {
                                 case "Hour":
                                     hour = Int32.Parse(entryValue);
                                     break;
-                                case "Minute":
-                                    minute = Int32.Parse(entryValue);
-                                    break;
-                                case "Second":
-                                    second = Int32.Parse(entryValue);
-                                    break;
                                 case "Visible":
                                     visible = bool.Parse(entryValue);
                                     break;
@@ -110,13 +107,6 @@ namespace CountdownCollection {
                 }
                 i++;
             }
-
-            //events I still want to add
-            ////chineseNewYear
-            ////easter
-            ////presidentsDay
-            ////taxDay
-            ////veteransDay
         }
 
         public void readMyEventsFile() {
@@ -124,7 +114,7 @@ namespace CountdownCollection {
 
             //values for an event
             string name, source;
-            int month, day, hour, minute, second;
+            int year, month, day, hour, minute, second;
             bool visible;
             bool oneTimeEvent;
 
@@ -139,6 +129,7 @@ namespace CountdownCollection {
                 //values for an event
                 name = "";
                 source = "";
+                year = 2016; //2016 used to prevent impossible date due to leap day, the year value will be reset anyhow
                 month = 1;
                 day = 1;
                 hour = 0;
@@ -162,6 +153,9 @@ namespace CountdownCollection {
                                 case "Source":
                                     source = entryValue;
                                     break;
+                                case "Year":
+                                    year = Int32.Parse(entryValue);
+                                    break;
                                 case "Month":
                                     month = Int32.Parse(entryValue);
                                     break;
@@ -173,9 +167,6 @@ namespace CountdownCollection {
                                     break;
                                 case "Minute":
                                     minute = Int32.Parse(entryValue);
-                                    break;
-                                case "Second":
-                                    second = Int32.Parse(entryValue);
                                     break;
                                 case "Visible":
                                     visible = bool.Parse(entryValue);
@@ -189,10 +180,9 @@ namespace CountdownCollection {
                         }
 
                         //add the new event to list(s)
-                        //2016 used to prevent impossible date due to leap day, the year value will be reset anyhow
-                        Event newEvent = new Event(name, new DateTime(2016, month, day, hour, minute, second), visible);
-                        GlobalVariables.resetEvent(newEvent);
+                        Event newEvent = new Event(name, new DateTime(year, month, day, hour, minute, second), visible);
                         newEvent.setOneTimeEvent(oneTimeEvent);
+                        GlobalVariables.resetEvent(newEvent);
                         GlobalVariables.myEvents.Add(newEvent);
 
                         break;
@@ -223,27 +213,55 @@ namespace CountdownCollection {
             }
         }
 
-        public string pathToMyEventsFile() {
+        public string pathToStoredEventsFile() {
+            return pathToStoredEventsFile(false);
+        }
+
+        public string pathToStoredEventsFile(bool temp) {
             switch (Device.RuntimePlatform) {
                 case Device.iOS:
                     string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                    return Path.Combine(documentsPath, "MyEvents.txt");
+                    if (temp) {
+                        return Path.Combine(documentsPath, "StoredEvents_temp.txt");
+                    }
+                    else {
+                        return Path.Combine(documentsPath, "StoredEvents.txt");
+                    }
                 case Device.UWP:
                     string root = ApplicationData.Current.LocalFolder.Path;
-                    return root + @"\MyEvents.txt";
+                    if (temp) {
+                        return root + @"\StoredEvents_temp.txt";
+                    }
+                    else {
+                        return root + @"\StoredEvents.txt";
+                    }
                 default:
                     return "";
             }
         }
 
-        public string pathToStoredEventsFile() {
+        public string pathToMyEventsFile() {
+            return pathToMyEventsFile(false);
+        }
+
+        public string pathToMyEventsFile(bool temp) {
             switch (Device.RuntimePlatform) {
                 case Device.iOS:
                     string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                    return Path.Combine(documentsPath, "StoredEvents.txt");
+                    if (temp) {
+                        return Path.Combine(documentsPath, "MyEvents_temp.txt");
+                    }
+                    else {
+                        return Path.Combine(documentsPath, "MyEvents.txt");
+                    }
                 case Device.UWP:
                     string root = ApplicationData.Current.LocalFolder.Path;
-                    return root + @"\StoredEvents.txt";
+                    if (temp) {
+                        return root + @"\MyEvents_temp.txt";
+                    }
+                    else {
+                        return root + @"\MyEvents.txt";
+                    }
                 default:
                     return "";
             }
@@ -268,10 +286,46 @@ namespace CountdownCollection {
             stream.Close();
         }
 
+        public void resetMyEventsFile() {
+            System.IO.File.Delete(pathToMyEventsFile());
+        }
+
+        public void updateStoredEventsFile() {
+            if (saving) {
+                return;
+            }
+            saving = true;
+
+            clearStoredEventsTempFile();
+            var filePath = pathToStoredEventsFile(true);
+            var realFilePath = pathToStoredEventsFile();
+
+            for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
+                System.IO.File.AppendAllText(filePath, "<Event>\n");
+                System.IO.File.AppendAllText(filePath, "\t<Name=" + GlobalVariables.storedEvents[i].getName() + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Month=" + GlobalVariables.storedEvents[i].getDate().Month + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Day=" + GlobalVariables.storedEvents[i].getDate().Day + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Hour=" + GlobalVariables.storedEvents[i].getDate().Hour + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Visible=" + GlobalVariables.storedEvents[i].isVisible() + ">\n");
+                System.IO.File.AppendAllText(filePath, "</Event>\n");
+            }
+
+            System.IO.File.Copy(filePath, realFilePath, true);
+            clearStoredEventsTempFile();
+
+            saving = false;
+        }
+
         public void updateMyEventsFile() {
-            clearMyEventsFile();
-            var filePath = pathToMyEventsFile();
-            Debug.WriteLine(filePath);
+            if (saving) {
+                return;
+            }
+            saving = true;
+
+            clearMyEventsTempFile();
+            var filePath = pathToMyEventsFile(true);
+            var realFilePath = pathToMyEventsFile();
+            //Debug.WriteLine(realFilePath);
 
             //write down current date
             System.IO.File.AppendAllText(filePath, "<LastDate>\n");
@@ -283,46 +337,54 @@ namespace CountdownCollection {
             for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
                 System.IO.File.AppendAllText(filePath, "<Event>\n");
                 System.IO.File.AppendAllText(filePath, "\t<Name=" + GlobalVariables.myEvents[i].getName() + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Year=" + GlobalVariables.myEvents[i].getDate().Year + ">\n");
                 System.IO.File.AppendAllText(filePath, "\t<Month=" + GlobalVariables.myEvents[i].getDate().Month + ">\n");
                 System.IO.File.AppendAllText(filePath, "\t<Day=" + GlobalVariables.myEvents[i].getDate().Day + ">\n");
+                if (!GlobalVariables.myEvents[i].isAllDayEvent()) {
+                    System.IO.File.AppendAllText(filePath, "\t<Hour=" + GlobalVariables.myEvents[i].getDate().Hour + ">\n");
+                    System.IO.File.AppendAllText(filePath, "\t<Minute=" + GlobalVariables.myEvents[i].getDate().Minute + ">\n");
+                }
                 System.IO.File.AppendAllText(filePath, "\t<Visible=" + GlobalVariables.myEvents[i].isVisible() + ">\n");
                 System.IO.File.AppendAllText(filePath, "\t<OneTimeEvent=" + GlobalVariables.myEvents[i].isOneTimeEvent() + ">\n");
                 System.IO.File.AppendAllText(filePath, "</Event>\n");
             }
+
+            System.IO.File.Copy(filePath, realFilePath, true);
+            clearMyEventsTempFile();
+
+            saving = false;
         }
 
-        public void updateStoredEventsFile() {
-            clearStoredEventsFile();
-            var filePath = pathToStoredEventsFile();
-
-            for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
-                System.IO.File.AppendAllText(filePath, "<Event>\n");
-                System.IO.File.AppendAllText(filePath, "\t<Name=" + GlobalVariables.storedEvents[i].getName() + ">\n");
-                System.IO.File.AppendAllText(filePath, "\t<Month=" + GlobalVariables.storedEvents[i].getDate().Month + ">\n");
-                System.IO.File.AppendAllText(filePath, "\t<Day=" + GlobalVariables.storedEvents[i].getDate().Day + ">\n");
-                System.IO.File.AppendAllText(filePath, "\t<Visible=" + GlobalVariables.storedEvents[i].isVisible() + ">\n");
-                System.IO.File.AppendAllText(filePath, "</Event>\n");
-            }
+        public void clearStoredEventsTempFile() {
+            System.IO.File.Delete(pathToStoredEventsFile(true));
         }
 
-        public void clearMyEventsFile() {
-            System.IO.File.Delete(pathToMyEventsFile());
-        }
-
-        public void clearStoredEventsFile() {
-            System.IO.File.Delete(pathToStoredEventsFile());
+        public void clearMyEventsTempFile() {
+            System.IO.File.Delete(pathToMyEventsFile(true));
         }
 
         public void appendEventToFile(Event newEvent) {
+            if (saving) {
+                return;
+            }
+            saving = true;
+
             var filePath = pathToMyEventsFile();
 
             System.IO.File.AppendAllText(filePath, "<Event>\n");
             System.IO.File.AppendAllText(filePath, "\t<Name=" + newEvent.getName() + ">\n");
+            System.IO.File.AppendAllText(filePath, "\t<Year=" + newEvent.getDate().Year + ">\n");
             System.IO.File.AppendAllText(filePath, "\t<Month=" + newEvent.getDate().Month + ">\n");
             System.IO.File.AppendAllText(filePath, "\t<Day=" + newEvent.getDate().Day + ">\n");
+            if (!newEvent.isAllDayEvent()) {
+                System.IO.File.AppendAllText(filePath, "\t<Hour=" + newEvent.getDate().Hour + ">\n");
+                System.IO.File.AppendAllText(filePath, "\t<Minute=" + newEvent.getDate().Minute + ">\n");
+            }
             System.IO.File.AppendAllText(filePath, "\t<Visible=" + newEvent.isVisible() + ">\n");
             System.IO.File.AppendAllText(filePath, "\t<OneTimeEvent=" + newEvent.isOneTimeEvent() + ">\n");
             System.IO.File.AppendAllText(filePath, "</Event>\n");
+
+            saving = false;
         }
     }
 }

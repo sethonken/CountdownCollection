@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Foundation;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,33 +16,48 @@ namespace CountdownCollection {
         public int lastDay;
         public int currentDay;
         public int utilPaddingHeight;
+        public int eventFontSize;
+        public int dateFontSize;
+        public int countdownFontSize;
 
+        public bool fadingGrid;
+        public bool populatingGrid;
+        public bool animating;
         DateTime currentTime;
 
-        private System.Timers.Timer objTimer;
+        ActivityIndicator newDayIndicator;
+
+        public System.Timers.Timer objTimer;
 
         public MainPage() {
-            Debug.WriteLine("Starting main page");
-            try {
-                InitializeComponent();
-                Debug.WriteLine("Components initialized");
-                initializeEvents();
-            } catch (System.Reflection.AmbiguousMatchException ex) {
-                Debug.WriteLine("****\n****\n" + ex.Source + ex.Message + ex.StackTrace);
-            }
+            InitializeComponent();
+            initializeStoredEvents();
+            initializeMyEvents();
 
             App.Current.MainPage = new NavigationPage();
+            Content = animationStack;
             lastDay = -1;
+            eventFontSize = 13;
+            dateFontSize = 11;
+            countdownFontSize = 23;
+            fadingGrid = false;
+            populatingGrid = true;
+            animating = true;
+            
+            //initialize indicator for a new day refresh
+            newDayIndicator = new ActivityIndicator();
+            newDayIndicator.HorizontalOptions = LayoutOptions.FillAndExpand;
+            newDayIndicator.VerticalOptions = LayoutOptions.Center;
+            newDayIndicator.Color = Color.White;
+            newDayIndicator.BackgroundColor = Color.Black;
+            newDayIndicator.IsEnabled = true;
+            newDayIndicator.IsRunning = true;
 
             //start opening animation
-            try {
-                System.Threading.ThreadStart openingAnimationStart = animateOpening;
-                System.Threading.Thread openingAnimationThread = new System.Threading.Thread(openingAnimationStart);
-                openingAnimationThread.IsBackground = true;
-                openingAnimationThread.Start();
-            } catch (Exception ex) {
-                Debug.WriteLine("****\n****\n" + ex.Source + ex.Message + ex.StackTrace);
-            }
+            System.Threading.ThreadStart openingAnimationStart = animateOpening;
+            System.Threading.Thread openingAnimationThread = new System.Threading.Thread(openingAnimationStart);
+            openingAnimationThread.IsBackground = true;
+            openingAnimationThread.Start();
 
             //timer
             objTimer = new System.Timers.Timer();
@@ -52,22 +68,39 @@ namespace CountdownCollection {
 
         public void ObjTimer_Elapsed(object sender, ElapsedEventArgs e) {
             refreshGrid();
+            if (DateTime.Now.Hour == 23 && DateTime.Now.Minute == 59 && DateTime.Now.Second == 59) {
+                //fade grid back in
+                System.Threading.ThreadStart t_Start = fadeGrid;
+                System.Threading.Thread t = new System.Threading.Thread(t_Start);
+                t.IsBackground = true;
+                t.Start();
+            }
             newDayRefresh();
         }
 
-        public void newDayRefresh() {
+        public async void newDayRefresh() {
+            bool setToGrid = false;
+            bool populate = false;
+            if (lastDay == -1) {
+                setToGrid = true;
+                populate = true;
+            }
             currentDay = DateTime.Now.Day;
             if (lastDay != currentDay) {
+                lastDay = currentDay;
                 FileHandler fileHandler = new FileHandler();
 
                 //set current date text
                 Device.BeginInvokeOnMainThread(() => {
-                    currentDate.Text = "(" + DateTime.Now.Month + "/" + DateTime.Now.Day + "/" + DateTime.Now.Year + ")";
+                    currentDate.Text = DateTime.Now.ToString("D");
                 });
 
                 //new day, change any events that were today to next year
                 for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
-                    if (GlobalVariables.myEvents[i].DaysUntil < 0) {
+                    if (GlobalVariables.myEvents[i].getDaysUntil() < 0) {
+                        if (GlobalVariables.myEvents[i].isVisible()) {
+                            populate = true;
+                        }
                         if (GlobalVariables.myEvents[i].isOneTimeEvent()) {
                             GlobalVariables.myEvents.RemoveAt(i--);
                             continue;
@@ -79,7 +112,10 @@ namespace CountdownCollection {
                     }
                 }
                 for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
-                    if (GlobalVariables.storedEvents[i].DaysUntil < 0) {
+                    if (GlobalVariables.storedEvents[i].getDaysUntil() < 0) {
+                        if (GlobalVariables.storedEvents[i].isVisible()) {
+                            populate = true;
+                        }
                         GlobalVariables.resetEvent(GlobalVariables.storedEvents[i]);
                     }
                     else {
@@ -88,52 +124,137 @@ namespace CountdownCollection {
                 }
 
                 //check if a one time event has lapsed since last app open
-                bool showElapsedEvents = false;
                 for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
                     if (GlobalVariables.myEvents[i].isOneTimeEvent() && eventHasLapsed(GlobalVariables.myEvents[i])) {
-                        GlobalVariables.elapsedEvents.Add(GlobalVariables.myEvents[i]);
                         GlobalVariables.myEvents.RemoveAt(i--);
-                        showElapsedEvents = true;
                         continue;
                     }
                 }
 
-                //showElapsedEvents = false; //test
-                if (showElapsedEvents) {
-                    animateElapsedEvents();
+                //see if repopulating is necessary {
+                if (!populate) {
+                    for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
+                        if (GlobalVariables.myEvents[i].getDate().DayOfYear < DateTime.Now.DayOfYear) {
+                            continue;
+                        }
+                        if (GlobalVariables.myEvents[i].getDate().DayOfYear == DateTime.Now.DayOfYear && GlobalVariables.myEvents[i].getDate().Year == DateTime.Now.Year) {
+                            if (GlobalVariables.myEvents[i].isVisible()) {
+                                populate = true;
+                                break;
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
+                        if (GlobalVariables.storedEvents[i].getDate().DayOfYear < DateTime.Now.DayOfYear) {
+                            continue;
+                        }
+                        if (GlobalVariables.storedEvents[i].getDate().DayOfYear == DateTime.Now.DayOfYear && GlobalVariables.storedEvents[i].getDate().Year == DateTime.Now.Year) {
+                            if (GlobalVariables.storedEvents[i].isVisible()) {
+                                populate = true;
+                                break;
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                    }
                 }
 
-                fileHandler.updateMyEventsFile();
-                refreshGrid();
-                lastDay = currentDay;
-                Device.BeginInvokeOnMainThread(() => {
-                    populateGrid();
+                await Task.Run(() => {
+                    try {
+                        fileHandler.updateMyEventsFile();
+                    } catch (Exception ex) {
+                        Debug.WriteLine("Exception trying to update my events file:\n" + ex.Message);
+                    }
                 });
+                refreshGrid();
+                Device.BeginInvokeOnMainThread(() => {
+                    if (populate) {
+                        populateGrid();
+                    }
+                });
+
+                while (populatingGrid) {
+                    ;
+                }
+                //set page's content back to original stack
+                if (setToGrid) {
+                    while (animating) {
+                        ;
+                    }
+                    Thread.Sleep(100);
+                    Device.BeginInvokeOnMainThread(() => {
+                        Content = animationStack;
+                        animationStack.Children.Insert(0, mainStack);
+                        Device.BeginInvokeOnMainThread(async () => {
+                            animationStack.Children.RemoveAt(1);
+                            uint fadeTime = 800;
+                            Device.BeginInvokeOnMainThread(async () => {
+                                await utilitiesPadding.FadeTo(1.0, fadeTime);
+                            });
+                            Device.BeginInvokeOnMainThread(async () => {
+                                await Buttons.FadeTo(1.0, fadeTime);
+                            });
+                            await gridStack.FadeTo(1.0, fadeTime);
+                        });
+                    });
+                }
+                else {
+                    Device.BeginInvokeOnMainThread(async () => {
+                        await gridStack.FadeTo(1.0, 800);
+                    });
+                }
             }
+        }
+
+        public void displayActivityIndicator() {
+            var utilPadding = new Label {
+                BackgroundColor = Color.White,
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                HeightRequest = getUtilPaddingHeight(),
+                Opacity = 0
+            };
+
+            var logoBanner = new Image {
+                Aspect = Aspect.AspectFit,
+                Source = "LogoWithName.png",
+                BackgroundColor = Color.FromHex("#0000dc"),
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+
+            var indicator = new ActivityIndicator() {
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                Color = Color.White,
+                BackgroundColor = Color.Black,
+                IsEnabled = true,
+                IsRunning = true
+            };
+
+            var root = new StackLayout() {
+                HorizontalOptions = LayoutOptions.FillAndExpand,
+                VerticalOptions = LayoutOptions.FillAndExpand,
+                Spacing = 0,
+                BackgroundColor = Color.Black,
+                Children = {
+                    utilPadding,
+                    logoBanner,
+                    indicator
+                }
+            };
+
+            Device.BeginInvokeOnMainThread(() => {
+                Content = root;
+            });
         }
 
         bool eventHasLapsed(Event oldEvent) {
             DateTime storedDate = new DateTime(GlobalVariables.lastRecordedYear, GlobalVariables.lastRecordedMonth, GlobalVariables.lastRecordedDay, 0, 0, 0);
 
-            int daysUntilEvent = (oldEvent.getDate() - storedDate).Days;
-            if (isLeapYear(storedDate)) {
-                if (storedDate.Month < 3) {
-                    daysUntilEvent--;
-                }
-            }
-            if (isLeapYear(oldEvent.getDate())) {
-                if (oldEvent.getDate().Month > 2) {
-                    daysUntilEvent--;
-                }
-            }
-
-            if (oldEvent.getDate().Month == 2 && oldEvent.getDate().Day == 29) {
-                if (isLeapYear(storedDate) && storedDate.Month > 2) {
-                    return false;
-                }
-            }
-
-            if (daysUntilEvent >= 365) {
+            if ((oldEvent.getDate() - storedDate).Seconds < 0) {
                 return true;
             }
 
@@ -165,20 +286,18 @@ namespace CountdownCollection {
             }
         }
 
-        public void initializeEvents() {
-            GlobalVariables.myEvents = new List<Event>();
+        public void initializeStoredEvents() {
             GlobalVariables.storedEvents = new List<Event>();
-            GlobalVariables.elapsedEvents = new List<Event>();
 
             FileHandler fileHandler = new FileHandler();
-            try {
-                fileHandler.readStoredEventsFile();
-                fileHandler.readMyEventsFile();
-            } catch (Exception ex) {
-                Debug.WriteLine("Exception Caught!\n" + ex.Message + ex.StackTrace);
-            }
-            //GlobalVariables.elapsedEvents.Add(GlobalVariables.storedEvents[0]); //test
-            //GlobalVariables.elapsedEvents.Add(GlobalVariables.storedEvents[1]); //test
+            fileHandler.readStoredEventsFile();
+        }
+
+        public void initializeMyEvents() {
+            GlobalVariables.myEvents = new List<Event>();
+
+            FileHandler fileHandler = new FileHandler();
+            fileHandler.readMyEventsFile();
         }
 
         public void addNewEvent(object sender, EventArgs e) {
@@ -193,33 +312,74 @@ namespace CountdownCollection {
             return utilPaddingHeight;
         }
 
+        public void fadeGrid() {
+            if (fadingGrid) {
+                return;
+            }
+            fadingGrid = true;
+
+            Device.BeginInvokeOnMainThread(async () => {
+                await gridStack.FadeTo(0.0, 500);
+                fadingGrid = false;
+            });
+        }
+
         public async void animateOpening() {
             //set utilities padding size based on device
             switch (Device.RuntimePlatform) {
                 case Device.iOS:
+                    unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
                     utilPaddingHeight = 20;
+                    //Debug.WriteLine("Device: " + NSProcessInfo.ProcessInfo.Environment["SIMULATOR_MODEL_IDENTIFIER"]);
+                    //switch (NSProcessInfo.ProcessInfo.Environment["SIMULATOR_MODEL_IDENTIFIER"].ToString()) {
+                    //    case "iPhone6,1":
+                    //    case "iPhone8,4":
+                    //        dateFontSize = 10;
+                    //        countdownFontSize = 19;
+                    //        eventFontSize = 11;
+                    //        unitLabel.Text = String.Format("{0,7}{1,8}{2,7}{3,6}", "Days", "Hrs", "Mins", "Secs");
+                    //        utilPaddingHeight = 20;
+                    //        break;
+                    //    case "iPhone10,3":
+                    //        unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
+                    //        utilPaddingHeight = 40;
+                    //        break;
+                    //    default:
+                    //        unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
+                    //        utilPaddingHeight = 20;
+                    //        break;
+                    //}
                     break;
                 default:
+                    unitLabel.Text = String.Format("{0,8}{1,10}{2,10}{3,10}", "Days", "Hrs", "Mins", "Secs");
                     utilPaddingHeight = 0;
                     break;
             }
             utilitiesPadding.HeightRequest = utilPaddingHeight;
 
-            //fade out blue boxview and move CC logo to left side and shrink
-            Content = animationStack;
-            await animationStack.FadeTo(1.0, 1000);
+            //fade out blue boxview
+            Device.BeginInvokeOnMainThread(async () => {
+                await animationStack.FadeTo(1.0, 1);
+            });
 
             //create single cell grid and add background logo
             Grid logoGrid = new Grid {
                 HorizontalOptions = LayoutOptions.FillAndExpand
             };
-            logoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(153, GridUnitType.Star) });
-            logoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(728, GridUnitType.Star) });
             Device.BeginInvokeOnMainThread(() => {
                 this.BackgroundColor = Color.Black;
                 animationStack.Children.Add(logoGrid);
             });
-            double imageHeight = (405.0 / 3524.0) * (this.Width);
+
+            tryagain:
+            try {
+                while (Bounds.Width <= 0) {
+                    ;
+                }
+            } catch (Exception ex) {
+                goto tryagain;
+            }
+            double imageHeight = (405.0 / 3524.0) * (Bounds.Width);
             BoxView logoBackground = new BoxView() {
                 BackgroundColor = Color.FromRgb(0.0, 0.0, 220.0 / 255.0),
                 Opacity = 0.0,
@@ -235,125 +395,67 @@ namespace CountdownCollection {
             Device.BeginInvokeOnMainThread(() => {
                 logoGrid.Children.Add(LogoWithName, 0, 2, 0, 1);
             });
+            while (Bounds == null || Bounds.Height <= 0) {
+                ;
+            }
             double logoGridTranslateLen = Bounds.Height / 2.16;
-            await logoGrid.TranslateTo(0.0, logoGridTranslateLen, 1);
-            await LogoWithName.FadeTo(1.0, 1600);
+            Device.BeginInvokeOnMainThread(() => {
+                logoGrid.TranslateTo(0.0, logoGridTranslateLen, 1);
+                Device.BeginInvokeOnMainThread(async () => {
+                    await LogoWithName.FadeTo(0.0, 800);
+                    await LogoWithName.FadeTo(0.99, 600);
+                    await LogoWithName.FadeTo(1.0, 500);
+                });
+            });
 
             //move logo and background to top together and briefly pause
-            double len = 35.0;
-            double logoGridTranslated = (-this.Height + LogoWithName.Height) / 2.0;
-            for (int i = 1; i <= len; i++) {
-                Device.BeginInvokeOnMainThread(() => {
-                    logoBackground.Opacity = i / len;
-                });
-                await logoGrid.TranslateTo(0.0, ((len - i) / len) * logoGridTranslateLen + (i / len) * utilPaddingHeight + 5, 1);
-            }
-            await logoGrid.FadeTo(1.0, 1);
-
-            //set page's content back to original stack
-            Device.BeginInvokeOnMainThread(() => {
-                animationStack.Children.Insert(0, mainStack);
-            });
-            Device.BeginInvokeOnMainThread(async () => {
-                animationStack.Children.RemoveAt(1);
+            await Task.Run(() => {
+                double len = 30.0; //segments in transition to top
+                while (LogoWithName.Opacity != 1) {
+                    ;
+                }
                 Device.BeginInvokeOnMainThread(async () => {
-                    await utilitiesPadding.FadeTo(1.0, 1000);
+                    int i = 1;
+                    while (i <= len) {
+                        await logoBackground.FadeTo(i / len, 1);
+                        Device.BeginInvokeOnMainThread(async () => {
+                            if (i <= len) {
+                                await logoGrid.TranslateTo(0.0, ((len - i) / len) * logoGridTranslateLen + (i / len) * (utilPaddingHeight) + (i / len) * 5, 1);
+                                Device.BeginInvokeOnMainThread(() => {
+                                    i++;
+                                });
+                            }
+                        });
+                    }
                 });
-                await gridStack.FadeTo(1.0, 1000);
+                while (logoBackground.Opacity != 1) {
+                    ;
+                }
+                Thread.Sleep(35);
+                displayActivityIndicator();
+                animating = false;
             });
         }
 
-        public void animateElapsedEvents() {
-            Device.BeginInvokeOnMainThread(async () => {
-                //define new stack layout for animation
-                StackLayout animationStack = new StackLayout();
-                animationStack.BackgroundColor = Color.Gold;
-                animationStack.Opacity = 0.0;
-
-                //set page's content to animation
-                Content = animationStack;
-
-                //fade in stack layout
-                await animationStack.FadeTo(1.0, 1500);
-
-                for (int i = 0; i < GlobalVariables.elapsedEvents.Count; i++) {
-                    //create elapsed event label
-                    Label eventLabel = new Label();
-                    eventLabel.Text = GlobalVariables.elapsedEvents[i].getName();
-                    eventLabel.FontSize = 40;
-                    eventLabel.TextColor = Color.White;
-                    eventLabel.FontAttributes = FontAttributes.Bold;
-                    eventLabel.HorizontalTextAlignment = TextAlignment.Center;
-                    eventLabel.HorizontalOptions = LayoutOptions.FillAndExpand;
-                    eventLabel.VerticalOptions = LayoutOptions.StartAndExpand;
-
-                    //create elapsed event date label
-                    Label dateLabel = new Label();
-                    dateLabel.Text = "(" + GlobalVariables.elapsedEvents[i].getDate().Month +
-                                     "/" + GlobalVariables.elapsedEvents[i].getDate().Day +
-                                     "/" + GlobalVariables.elapsedEvents[i].getDate().Year + ")";
-                    dateLabel.FontSize = 20;
-                    dateLabel.TextColor = Color.White;
-                    dateLabel.FontAttributes = FontAttributes.Bold;
-                    dateLabel.HorizontalTextAlignment = TextAlignment.Center;
-                    dateLabel.HorizontalOptions = LayoutOptions.FillAndExpand;
-                    dateLabel.VerticalOptions = LayoutOptions.EndAndExpand;
-
-                    //add event name and date to event stack 
-                    StackLayout eventStack = new StackLayout();
-                    eventStack.BackgroundColor = Color.Blue;
-                    //eventStack.Opacity = 0;
-                    eventStack.Children.Add(eventLabel);
-                    eventStack.Children.Add(dateLabel);
-                    await eventStack.TranslateTo(0, this.Height / 2.0, 1);
-
-                    //add event stack to animation
-                    animationStack.Children.Add(eventStack);
-
-                    //move event stack from center page to top 1/8, fading in
-                    double y = this.Height / 2.0;
-                    while (y > this.Height / 8.0) {
-                        eventStack.Opacity = (this.Height / 2.0 - y) / (this.Height / 2.0 - this.Height / 8.0);
-                        await eventStack.TranslateTo(0, y, 1);
-                        y -= 20;
-                    }
-
-                    //pause
-                    await eventStack.FadeTo(1.0, 500);
-
-                    //fade out event stack
-                    await eventStack.FadeTo(0.0, 500);
-
-                    //remove event stack from animation stack
-                    animationStack.Children.Clear();
-
-                    Debug.WriteLine("Animated " + eventLabel.Text);
-                }
-
-                //set page's content back to original stack
-                Content = mainStack;
-            });
+        public void print(string s) {
+            Debug.WriteLine(s);
         }
 
         public void populateGrid() {
+            populatingGrid = true;
+
             //clear grid
             grid2.Children.Clear();
 
             //sort events based on countdown
-            Thread t_sortEvents = new Thread(() => {
-                Thread.CurrentThread.IsBackground = true;
-                GlobalVariables.myEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
-                GlobalVariables.storedEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
-            });
-            t_sortEvents.Start();
+            GlobalVariables.myEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
+            GlobalVariables.storedEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
 
             //add events to grid
             int row = 0;
             int myEventsIndex = 0;
             int storedEventsIndex = 0;
             Event currentEvent;
-
-            t_sortEvents.Join();
 
             while (myEventsIndex < GlobalVariables.myEvents.Count || storedEventsIndex < GlobalVariables.storedEvents.Count) {
                 currentEvent = null;
@@ -376,99 +478,89 @@ namespace CountdownCollection {
                 if (currentEvent.isNotVisible()) {
                     continue;
                 }
+
                 addEventToGrid(currentEvent, row++);
+                //Debug.WriteLine("Added " + currentEvent.getName() + " to grid");
             }
+
+            populatingGrid = false;
         }
 
         public void addEventToGrid(Event currentEvent, int row) {
-            Debug.WriteLine("Adding " + currentEvent.getName() + " to grid at " + row);
+            //Debug.WriteLine("Adding " + currentEvent.getName() + " to grid");
+
             DateTime date = currentEvent.getDate();
             double value = Math.Min(1, ((date - DateTime.Now).TotalHours) / 8760.0); //for color shade
-            int valueLabelSize = 27;
+            int botPad = 6;
+            int topPad = 4;
 
+            //components of row
             Label eventLabel = new Label();
-            eventLabel.FontSize = 12;
+            Label dateLabel = new Label();
+            Label countdown = new Label();
+            BoxView backColor = new BoxView();
+            BoxView yearFraction = new BoxView();
+            BoxView backColor2 = new BoxView();
+            StackLayout stack = new StackLayout();
+
+            eventLabel.FontSize = eventFontSize;
             eventLabel.Text = currentEvent.getName();
             eventLabel.HorizontalTextAlignment = TextAlignment.Center;
+            eventLabel.LineBreakMode = LineBreakMode.TailTruncation;
             eventLabel.HorizontalOptions = LayoutOptions.CenterAndExpand;
             eventLabel.FontAttributes = FontAttributes.Bold;
             eventLabel.TextColor = Color.FromRgb(1.0, 1.0, (60.0 / 255.0) * (value));
 
-            Label dateLabel = new Label();
-            dateLabel.FontSize = 10;
-            dateLabel.Text = "(" + currentEvent.getDate().Month + "/" + currentEvent.getDate().Day + "/" + currentEvent.getDate().Year + ")";
+            dateLabel.FontSize = dateFontSize;
+            dateLabel.Text = currentEvent.getDate().ToString("D");
+            dateLabel.LineBreakMode = LineBreakMode.TailTruncation;
             dateLabel.HorizontalOptions = LayoutOptions.CenterAndExpand;
             dateLabel.FontAttributes = FontAttributes.Bold;
             dateLabel.TextColor = Color.White;
 
-            Label numDays = new Label();
-            numDays.FontSize = valueLabelSize;
-            numDays.SetBinding(Label.TextProperty, "DaysUntil");
-            numDays.BindingContext = currentEvent;
-            numDays.TextColor = Color.White;
-            numDays.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            numDays.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
+            countdown.SetBinding(Label.TextProperty, "Countdown");
+            countdown.BindingContext = currentEvent;
+            countdown.FontSize = countdownFontSize;
+            countdown.TextColor = Color.White;
+            countdown.HorizontalOptions = LayoutOptions.End;
+            countdown.VerticalOptions = LayoutOptions.Center;
+            countdown.Margin = new Thickness(0, 0, 5, 0);
+            countdown.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
 
-            Label numHours = new Label();
-            numHours.FontSize = valueLabelSize;
-            numHours.SetBinding(Label.TextProperty, "HoursUntil");
-            numHours.BindingContext = currentEvent;
-            numHours.TextColor = Color.White;
-            numHours.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            numHours.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
-
-            Label numMinutes = new Label();
-            numMinutes.FontSize = valueLabelSize;
-            numMinutes.SetBinding(Label.TextProperty, "MinutesUntil");
-            numMinutes.BindingContext = currentEvent;
-            numMinutes.TextColor = Color.White;
-            numMinutes.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            numMinutes.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
-
-            Label numSeconds = new Label();
-            numSeconds.FontSize = valueLabelSize;
-            numSeconds.SetBinding(Label.TextProperty, "SecondsUntil");
-            numSeconds.BindingContext = currentEvent;
-            numSeconds.TextColor = Color.White;
-            numSeconds.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            numSeconds.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
-
-            //add grid's back color
-            BoxView backColor = new BoxView();
             backColor.Color = Color.FromRgb(0.0, 0.0, 220.0 / 255.0 - (220.0 / 255.0) * value);
 
-            BoxView yearFraction = new BoxView();
             yearFraction.Color = Color.FromRgb(1.0, 1.0, (60.0 / 255.0) * (value));
             yearFraction.TranslationX = -(this.Width) + (this.Width) * fractionOfYear(currentEvent);
-            yearFraction.HeightRequest = 3;
+            yearFraction.HeightRequest = 2;
             yearFraction.VerticalOptions = LayoutOptions.End;
 
             //set yellow border when event day is today
-            if (DateTime.Now.Day == currentEvent.getDate().Day && DateTime.Now.Month == currentEvent.getDate().Month) {
-                BoxView backColor2 = new BoxView();
+            if (DateTime.Now.Day == currentEvent.getDate().Day && DateTime.Now.Month == currentEvent.getDate().Month && DateTime.Now.Year == currentEvent.getDate().Year) {
                 backColor2.WidthRequest = grid2.Width * fractionOfYear(currentEvent);
                 backColor2.Color = Color.FromRgb(1.0, 1.0, 0.0);
-                grid2.Children.Add(backColor2, 0, 5, row, row + 1);
-                backColor.Margin = 3;
+                grid2.Children.Add(backColor2, 0, 2, row, row + 1);
+                backColor.Margin = new Thickness(2, 2, 2, 0);
+                botPad = 0;
+                topPad = 0;
             }
 
             //combine event and date labels into stacklayout
-            StackLayout stack = new StackLayout();
-            stack.Padding = new Thickness(0, 0, 0, 3);
+            stack.Padding = new Thickness(0, topPad, 0, botPad);
+            stack.Spacing = 2;
+            stack.VerticalOptions = LayoutOptions.Center;
             stack.Children.Add(eventLabel);
             stack.Children.Add(dateLabel);
 
-            grid2.Children.Add(backColor, 0, 5, row, row + 1);
-            grid2.Children.Add(yearFraction, 0, 5, row, row + 1);
+            grid2.Children.Add(backColor, 0, 2, row, row + 1);
+            grid2.Children.Add(yearFraction, 0, 2, row, row + 1);
             grid2.Children.Add(stack, 0, row);
-            grid2.Children.Add(numDays, 1, row);
-            grid2.Children.Add(numHours, 2, row);
-            grid2.Children.Add(numMinutes, 3, row);
-            grid2.Children.Add(numSeconds, 4, row);
+            grid2.Children.Add(countdown, 1, row);
+
+            //Debug.WriteLine(currentEvent.getName() + " added to grid");
         }
 
         public double fractionOfYear(Event currentEvent) {
-            return (365.0 - currentEvent.DaysUntil) / 365.0;
+            return (365.0 - currentEvent.getDaysUntil()) / 365.0;
         }
     }
 }

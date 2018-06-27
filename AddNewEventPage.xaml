@@ -20,8 +20,18 @@
                 </StackLayout>
 
                 <StackLayout Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
-                    <Label Text="One Time Event" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
-                    <Switch x:Name="oneTimeSwitch" HorizontalOptions="EndAndExpand" Toggled="oneTimeSwitchChanged" IsToggled="False" />
+                    <Label Text="All-Day Event" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
+                    <Switch x:Name="allDaySwitch" HorizontalOptions="EndAndExpand" Toggled="allDaySwitchChanged" IsToggled="True" />
+                </StackLayout>
+
+                <StackLayout x:Name="startTimeStack" Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
+                    <Label Text="Start Time" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
+                    <TimePicker x:Name="timePicked" HorizontalOptions="FillAndExpand" BackgroundColor="Gray" />
+                </StackLayout>
+
+                <StackLayout Orientation="Horizontal" BackgroundColor="LightSteelBlue" Padding="0,5,0,5" >
+                    <Label Text="Yearly Event" HorizontalOptions="StartAndExpand" VerticalOptions="CenterAndExpand" />
+                    <Switch x:Name="yearlySwitch" HorizontalOptions="EndAndExpand" Toggled="yearlySwitchChanged" IsToggled="True" />
                 </StackLayout>
             </StackLayout>
 

@@ -5,7 +5,7 @@
              x:Class="CountdownCollection.MainPage"
              BackgroundColor="#0000dc" >
 
-    <StackLayout x:Name="animationStack" BackgroundColor="Black" HorizontalOptions="FillAndExpand" Opacity="0" />
+    <StackLayout x:Name="animationStack" BackgroundColor="Black" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" Opacity="0" />
 
     <Image x:Name="LogoWithName" Aspect="AspectFill" Source="LogoWithName.png" />
 
@@ -16,56 +16,47 @@
 
         <Image Aspect="AspectFill" Source="LogoWithName.png" BackgroundColor="#0000dc" Margin="0,5,0,5" />
 
-        <StackLayout x:Name="gridStack" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Opacity="0" >
+        <StackLayout x:Name="gridStack" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Opacity="0" Spacing="5" >
             <Grid x:Name="grid1" BackgroundColor="DarkGray" HorizontalOptions="FillAndExpand" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="9*"/>
-                    <ColumnDefinition Width="3*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="14" />
                 </Grid.RowDefinitions>
-                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="0" Text="(//)" x:Name="currentDate" />
-                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="1" Text="Days" />
-                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="2" Text="Hours" />
-                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="3" Text="Mins"  />
-                <Label HorizontalOptions="CenterAndExpand" FontSize="11" FontAttributes="Bold" Grid.Column="4" Text="Secs" />
+                <Label HorizontalOptions="Center" FontSize="11" FontAttributes="Bold" Grid.Column="0" Text=" " x:Name="currentDate" />
+                <Label HorizontalOptions="End" FontSize="11" FontAttributes="Bold" Grid.Column="1" x:Name="unitLabel" Margin="0,0,8,0" />
             </Grid>
 
-            <ScrollView>
-                <Grid x:Name="grid2" HorizontalOptions="FillAndExpand" >
+            <ScrollView x:Name="scrollView" VerticalOptions="FillAndExpand" >
+                <Grid x:Name="grid2" HorizontalOptions="FillAndExpand" VerticalOptions="Start" RowSpacing="4" >
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="9*"/>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
                 </Grid>
             </ScrollView>
+        </StackLayout>
 
-            <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="EndAndExpand" >
-                <Button Text="Add New Event" 
-                            TextColor="Black"
-                            FontAttributes="Bold"
-                            BackgroundColor="DarkGray"
-                            Clicked="addNewEvent" 
-                            HeightRequest="50" 
-                            HorizontalOptions="FillAndExpand" 
-                            VerticalOptions="EndAndExpand" />
+        <StackLayout x:Name="Buttons" Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="End" Opacity="0" Padding="0,5,0,0" >
+            <Button Text="Add New Event" 
+                TextColor="Black"
+                FontAttributes="Bold"
+                BackgroundColor="DarkGray"
+                Clicked="addNewEvent" 
+                HeightRequest="50" 
+                HorizontalOptions="FillAndExpand" 
+                VerticalOptions="EndAndExpand" />
 
-                <Button Text="Manage Events" 
-                                TextColor="Black"
-                                FontAttributes="Bold"
-                                BackgroundColor="DarkGray"
-                                Clicked="manageEvents" 
-                                HeightRequest="50" 
-                                HorizontalOptions="FillAndExpand" 
-                                VerticalOptions="EndAndExpand" />
-            </StackLayout>
+            <Button Text="Manage Events" 
+                TextColor="Black"
+                FontAttributes="Bold"
+                BackgroundColor="DarkGray"
+                Clicked="manageEvents" 
+                HeightRequest="50" 
+                HorizontalOptions="FillAndExpand" 
+                VerticalOptions="EndAndExpand" />
         </StackLayout>
     </StackLayout>
 </ContentPage>
