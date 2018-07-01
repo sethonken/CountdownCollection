@@ -32,7 +32,7 @@
                         VerticalOptions="EndAndExpand" />
             </StackLayout>
 
-            <ScrollView x:Name="scrollView" VerticalOptions="FillAndExpand" >
+            <ScrollView x:Name="scrollView" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" >
                 <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"  x:Name="storedEventsGrid" >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30"/>

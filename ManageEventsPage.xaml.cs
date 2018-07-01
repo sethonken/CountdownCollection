@@ -76,12 +76,12 @@ namespace CountdownCollection {
         }
 
         public void displayEmptyEvents() {
-            var emptyLabel = new Label {
+            Label emptyLabel = new Label {
                 BackgroundColor = Color.Black,
                 TextColor = Color.White,
                 Text = "No custom events found.",
-                HorizontalOptions = LayoutOptions.Center,
-                VerticalOptions = LayoutOptions.Center
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center
             };
 
             Device.BeginInvokeOnMainThread(() => {
@@ -268,8 +268,6 @@ namespace CountdownCollection {
             }
             if (!myEventsSelected) {
                 myEventsSelected = true;
-                restoreDefaultsButton.IsVisible = false;
-                deleteAllButton.IsVisible = true;
 
                 if (GlobalVariables.myEvents.Count == 0) {
                     Device.BeginInvokeOnMainThread(() => {
@@ -277,6 +275,9 @@ namespace CountdownCollection {
                     });
                     return;
                 }
+
+                restoreDefaultsButton.IsVisible = false;
+                deleteAllButton.IsVisible = true;
 
                 Device.BeginInvokeOnMainThread(() => {
                     displaySelectingIndicator();

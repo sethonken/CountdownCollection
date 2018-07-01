@@ -4,6 +4,7 @@ C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollecti
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Windows.Foundation.UniversalApiContract.winmd
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Xamarin.iOS.dll
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Mono.Security.dll
+C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Xamarin.iOS.pdb
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Xamarin.iOS.xml
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Mono.Security.pdb
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\AddNewEventPage.xaml.g.cs
@@ -17,5 +18,3 @@ C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollecti
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.csproj.CopyComplete
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.dll
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.pdb
-C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\bin\Debug\netstandard2.0\Xamarin.iOS.pdb
-C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.csprojAssemblyReference.cache
