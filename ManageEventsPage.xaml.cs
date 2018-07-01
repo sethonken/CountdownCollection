@@ -45,9 +45,19 @@ namespace CountdownCollection {
             populateGrids();
         }
 
-        public void populateGrids() {
-            populateStoredEventsGrid();
-            populateMyEventsGrid();
+        public async void populateGrids() {
+            Device.BeginInvokeOnMainThread(() => {
+                displaySelectingIndicator();
+            });
+
+            await Task.Run(() => {
+                Thread.Sleep(300);
+                Device.BeginInvokeOnMainThread(() => {
+                    populateStoredEventsGrid();
+                    populateMyEventsGrid();
+                    scrollView.Content = storedEventsGrid;
+                });
+            });
         }
 
         public async void done(object sender, EventArgs e) {
@@ -56,12 +66,27 @@ namespace CountdownCollection {
             await Task.Run(() => {
                 FileHandler fileHandler = new FileHandler();
                 fileHandler.updateStoredEventsFile();
-                fileHandler.updateMyEventsFile();
+                fileHandler.updateMyEventsFile(); 
 
                 Device.BeginInvokeOnMainThread(() => {
                     mainPage.populateGrid();
                     Navigation.PopModalAsync();
                 });
+            });
+        }
+
+        public void displayEmptyEvents() {
+            var emptyLabel = new Label {
+                BackgroundColor = Color.Black,
+                TextColor = Color.White,
+                Text = "No custom events found.",
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            Device.BeginInvokeOnMainThread(() => {
+                scrollView.Content = emptyLabel;
+                settingsButtons.IsVisible = false;
             });
         }
 
@@ -179,7 +204,7 @@ namespace CountdownCollection {
             });
 
             await Task.Run(() => {
-                Thread.Sleep(400);
+                Thread.Sleep(300);
                 FileHandler fileHandler = new FileHandler();
                 fileHandler.resetStoredEventsFile();
                 mainPage.initializeStoredEvents();
@@ -199,11 +224,14 @@ namespace CountdownCollection {
                 FileHandler fileHandler = new FileHandler();
                 fileHandler.resetMyEventsFile();
                 mainPage.initializeMyEvents();
-                populateMyEventsGrid();
+                Device.BeginInvokeOnMainThread(() => {
+                    displayEmptyEvents();
+                    populateMyEventsGrid();
+                });
             }
         }
 
-        public void changeToStoredEvents(object sender, EventArgs e) {
+        public async void changeToStoredEvents(object sender, EventArgs e) {
             myEventsButton.BackgroundColor = Color.DarkGray;
             storedEventsButton.BackgroundColor = Color.LightSteelBlue;
 
@@ -211,14 +239,27 @@ namespace CountdownCollection {
                 myEventsSelected = false;
             }
             if (!storedEventsSelected) {
+                Device.BeginInvokeOnMainThread(() => {
+                    if (!settingsButtons.IsVisible) {
+                        settingsButtons.IsVisible = true;
+                    }
+                    displaySelectingIndicator();
+                });
+
                 storedEventsSelected = true;
-                scrollView.Content = storedEventsGrid;
                 deleteAllButton.IsVisible = false;
                 restoreDefaultsButton.IsVisible = true;
+
+                await Task.Run(() => {
+                    Thread.Sleep(100);
+                    Device.BeginInvokeOnMainThread(() => {
+                        scrollView.Content = storedEventsGrid;
+                    });
+                });
             }
         }
 
-        public void changeToMyEvents(object sender, EventArgs e) {
+        public async void changeToMyEvents(object sender, EventArgs e) {
             storedEventsButton.BackgroundColor = Color.DarkGray;
             myEventsButton.BackgroundColor = Color.LightSteelBlue;
 
@@ -227,9 +268,26 @@ namespace CountdownCollection {
             }
             if (!myEventsSelected) {
                 myEventsSelected = true;
-                scrollView.Content = myEventsGrid;
                 restoreDefaultsButton.IsVisible = false;
                 deleteAllButton.IsVisible = true;
+
+                if (GlobalVariables.myEvents.Count == 0) {
+                    Device.BeginInvokeOnMainThread(() => {
+                        displayEmptyEvents();
+                    });
+                    return;
+                }
+
+                Device.BeginInvokeOnMainThread(() => {
+                    displaySelectingIndicator();
+                });
+
+                await Task.Run(() => {
+                    Thread.Sleep(100);
+                    Device.BeginInvokeOnMainThread(() => {
+                        scrollView.Content = myEventsGrid;
+                    });
+                });
             }
         }
 
@@ -245,11 +303,18 @@ namespace CountdownCollection {
                     for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
                         if (GlobalVariables.myEvents[i].getName().Equals(GlobalVariables.eventToBeDeleted)) {
                             GlobalVariables.myEvents.RemoveAt(i);
-                            Device.BeginInvokeOnMainThread(() => {
-                                populateMyEventsGrid();
-                                scrollView.Content = myEventsGrid;
-                            });
-
+                            if (GlobalVariables.myEvents.Count == 0) {
+                                Device.BeginInvokeOnMainThread(() => {
+                                    displayEmptyEvents();
+                                    populateMyEventsGrid();
+                                });
+                            }
+                            else {
+                                Device.BeginInvokeOnMainThread(() => {
+                                    populateMyEventsGrid();
+                                    scrollView.Content = myEventsGrid;
+                                });
+                            }
                             //remove event from saved file
                             FileHandler fileHandler = new FileHandler();
                             fileHandler.updateMyEventsFile();

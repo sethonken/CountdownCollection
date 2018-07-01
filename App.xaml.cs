@@ -42,6 +42,21 @@ namespace CountdownCollection {
         public static int lastRecordedMonth = 0;
         public static int lastRecordedDay = 0;
 
+        public static int eventFontSize = 13;
+        public static int dateFontSize = 11;
+        public static int countdownFontSize = 23;
+
+        public static List<int> grid2_realChildLocations;
+        public static Grid grid2 = new Grid {
+            HorizontalOptions = LayoutOptions.FillAndExpand,
+            VerticalOptions = LayoutOptions.Start,
+            RowSpacing = 4,
+            ColumnDefinitions = {
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+            }
+        };
+
         /*
          * Gives event correct date based on year
          */

@@ -43,7 +43,7 @@
             </ScrollView>
 
             <StackLayout VerticalOptions="End" Padding="0,5,0,0" Spacing="2" >
-                <StackLayout Orientation="Vertical" BackgroundColor="Black" Spacing="5" >
+                <StackLayout x:Name="settingsButtons" Orientation="Vertical" BackgroundColor="Black" Spacing="5" >
                     <StackLayout Orientation="Horizontal" >
                         <Button Text="Select All" 
                             TextColor="Black"

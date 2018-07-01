@@ -13,12 +13,10 @@ using Xamarin.Forms;
 
 namespace CountdownCollection {
     public partial class MainPage : ContentPage {
+        public int row;
         public int lastDay;
         public int currentDay;
         public int utilPaddingHeight;
-        public int eventFontSize;
-        public int dateFontSize;
-        public int countdownFontSize;
 
         public bool fadingGrid;
         public bool populatingGrid;
@@ -37,12 +35,10 @@ namespace CountdownCollection {
             App.Current.MainPage = new NavigationPage();
             Content = animationStack;
             lastDay = -1;
-            eventFontSize = 13;
-            dateFontSize = 11;
-            countdownFontSize = 23;
             fadingGrid = false;
             populatingGrid = true;
             animating = true;
+            scrollView.Content = GlobalVariables.grid2;
             
             //initialize indicator for a new day refresh
             newDayIndicator = new ActivityIndicator();
@@ -68,22 +64,18 @@ namespace CountdownCollection {
 
         public void ObjTimer_Elapsed(object sender, ElapsedEventArgs e) {
             refreshGrid();
-            if (DateTime.Now.Hour == 23 && DateTime.Now.Minute == 59 && DateTime.Now.Second == 59) {
-                //fade grid back in
-                System.Threading.ThreadStart t_Start = fadeGrid;
-                System.Threading.Thread t = new System.Threading.Thread(t_Start);
-                t.IsBackground = true;
-                t.Start();
-            }
             newDayRefresh();
         }
 
         public async void newDayRefresh() {
             bool setToGrid = false;
-            bool populate = false;
             if (lastDay == -1) {
+                await Task.Run(() => {
+                    Device.BeginInvokeOnMainThread(() => {
+                        populateGrid();
+                    });
+                });
                 setToGrid = true;
-                populate = true;
             }
             currentDay = DateTime.Now.Day;
             if (lastDay != currentDay) {
@@ -96,30 +88,75 @@ namespace CountdownCollection {
                 });
 
                 //new day, change any events that were today to next year
-                for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
-                    if (GlobalVariables.myEvents[i].getDaysUntil() < 0) {
-                        if (GlobalVariables.myEvents[i].isVisible()) {
-                            populate = true;
+                //*************************??
+                int myEventsIndex = 0;
+                int storedEventsIndex = 0;
+                int index = 0;
+                bool myEventType;
+
+                while (myEventsIndex < GlobalVariables.myEvents.Count || storedEventsIndex < GlobalVariables.storedEvents.Count) {
+                    myEventType = true;
+                    if (myEventsIndex < GlobalVariables.myEvents.Count) {
+                        if (storedEventsIndex < GlobalVariables.storedEvents.Count) {
+                            if (GlobalVariables.myEvents[myEventsIndex].getDate() < GlobalVariables.storedEvents[storedEventsIndex].getDate()) {
+                                index = myEventsIndex++;
+                            }
+                            else {
+                                index = storedEventsIndex++;
+                                myEventType = false;
+                            }
                         }
-                        if (GlobalVariables.myEvents[i].isOneTimeEvent()) {
-                            GlobalVariables.myEvents.RemoveAt(i--);
-                            continue;
+                        else {
+                            index = myEventsIndex++;
                         }
-                        GlobalVariables.resetEvent(GlobalVariables.myEvents[i]);
                     }
                     else {
-                        break;
+                        index = storedEventsIndex++;
+                        myEventType = false;
                     }
-                }
-                for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
-                    if (GlobalVariables.storedEvents[i].getDaysUntil() < 0) {
-                        if (GlobalVariables.storedEvents[i].isVisible()) {
-                            populate = true;
+
+                    if (myEventType) {
+                        if (GlobalVariables.myEvents[index].getDaysUntil() < 0) {
+                            if (GlobalVariables.myEvents[index].isOneTimeEvent()) {
+                                if (!setToGrid && GlobalVariables.myEvents[index].isVisible()) {
+                                    GlobalVariables.myEvents[index].removeFromGrid();
+
+                                    //move remaining real child locations to new indices
+                                    for (int j = 1; j < GlobalVariables.grid2_realChildLocations.Count; j++) {
+                                        if (GlobalVariables.grid2_realChildLocations[j] > GlobalVariables.grid2_realChildLocations[0]) {
+                                            GlobalVariables.grid2_realChildLocations[j] -= 5;
+                                        }
+                                    }
+
+                                    GlobalVariables.grid2_realChildLocations.RemoveAt(0);
+
+                                }
+                                GlobalVariables.myEvents.RemoveAt(index--);
+                                myEventsIndex--;
+                                Thread.Sleep(200);
+                                continue;
+                            }
+                            GlobalVariables.resetEvent(GlobalVariables.myEvents[index]);
+                            if (!setToGrid && GlobalVariables.myEvents[index].isVisible()) {
+                                Thread.Sleep(100);
+                                GlobalVariables.myEvents[index].refreshRow();
+                            }
                         }
-                        GlobalVariables.resetEvent(GlobalVariables.storedEvents[i]);
+                        if (!setToGrid && GlobalVariables.myEvents[index].isVisible()) {
+                            GlobalVariables.myEvents[index].refreshBackground();
+                        }
                     }
-                    else {
-                        break;
+                    else { //stored event type
+                        if (GlobalVariables.storedEvents[index].getDaysUntil() < 0) {
+                            GlobalVariables.resetEvent(GlobalVariables.storedEvents[index]);
+                            if (!setToGrid && GlobalVariables.storedEvents[index].isVisible()) {
+                                Thread.Sleep(100);
+                                GlobalVariables.storedEvents[index].refreshRow();
+                            }
+                        }
+                        if (!setToGrid && GlobalVariables.storedEvents[index].isVisible()) {
+                            GlobalVariables.storedEvents[index].refreshBackground();
+                        }
                     }
                 }
 
@@ -131,38 +168,6 @@ namespace CountdownCollection {
                     }
                 }
 
-                //see if repopulating is necessary {
-                if (!populate) {
-                    for (int i = 0; i < GlobalVariables.myEvents.Count; i++) {
-                        if (GlobalVariables.myEvents[i].getDate().DayOfYear < DateTime.Now.DayOfYear) {
-                            continue;
-                        }
-                        if (GlobalVariables.myEvents[i].getDate().DayOfYear == DateTime.Now.DayOfYear && GlobalVariables.myEvents[i].getDate().Year == DateTime.Now.Year) {
-                            if (GlobalVariables.myEvents[i].isVisible()) {
-                                populate = true;
-                                break;
-                            }
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    for (int i = 0; i < GlobalVariables.storedEvents.Count; i++) {
-                        if (GlobalVariables.storedEvents[i].getDate().DayOfYear < DateTime.Now.DayOfYear) {
-                            continue;
-                        }
-                        if (GlobalVariables.storedEvents[i].getDate().DayOfYear == DateTime.Now.DayOfYear && GlobalVariables.storedEvents[i].getDate().Year == DateTime.Now.Year) {
-                            if (GlobalVariables.storedEvents[i].isVisible()) {
-                                populate = true;
-                                break;
-                            }
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                }
-
                 await Task.Run(() => {
                     try {
                         fileHandler.updateMyEventsFile();
@@ -170,22 +175,16 @@ namespace CountdownCollection {
                         Debug.WriteLine("Exception trying to update my events file:\n" + ex.Message);
                     }
                 });
-                refreshGrid();
-                Device.BeginInvokeOnMainThread(() => {
-                    if (populate) {
-                        populateGrid();
-                    }
-                });
 
-                while (populatingGrid) {
-                    ;
-                }
                 //set page's content back to original stack
                 if (setToGrid) {
                     while (animating) {
                         ;
                     }
-                    Thread.Sleep(100);
+                    Thread.Sleep(80);
+                    while (populatingGrid) {
+                        ;
+                    }
                     Device.BeginInvokeOnMainThread(() => {
                         Content = animationStack;
                         animationStack.Children.Insert(0, mainStack);
@@ -200,11 +199,6 @@ namespace CountdownCollection {
                             });
                             await gridStack.FadeTo(1.0, fadeTime);
                         });
-                    });
-                }
-                else {
-                    Device.BeginInvokeOnMainThread(async () => {
-                        await gridStack.FadeTo(1.0, 800);
                     });
                 }
             }
@@ -334,9 +328,9 @@ namespace CountdownCollection {
                     //switch (NSProcessInfo.ProcessInfo.Environment["SIMULATOR_MODEL_IDENTIFIER"].ToString()) {
                     //    case "iPhone6,1":
                     //    case "iPhone8,4":
-                    //        dateFontSize = 10;
-                    //        countdownFontSize = 19;
-                    //        eventFontSize = 11;
+                    //        GlobalVariables.dateFontSize = 10;
+                    //        GlobalVariables.countdownFontSize = 19;
+                    //        GlobalVariables.eventFontSize = 11;
                     //        unitLabel.Text = String.Format("{0,7}{1,8}{2,7}{3,6}", "Days", "Hrs", "Mins", "Secs");
                     //        utilPaddingHeight = 20;
                     //        break;
@@ -351,7 +345,7 @@ namespace CountdownCollection {
                     //}
                     break;
                 default:
-                    unitLabel.Text = String.Format("{0,8}{1,10}{2,10}{3,10}", "Days", "Hrs", "Mins", "Secs");
+                    unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,10}", "Days", "Hrs", "Mins", "Secs");
                     utilPaddingHeight = 0;
                     break;
             }
@@ -431,8 +425,10 @@ namespace CountdownCollection {
                 while (logoBackground.Opacity != 1) {
                     ;
                 }
-                Thread.Sleep(35);
+
                 displayActivityIndicator();
+                //Thread.Sleep(100);
+
                 animating = false;
             });
         }
@@ -445,14 +441,14 @@ namespace CountdownCollection {
             populatingGrid = true;
 
             //clear grid
-            grid2.Children.Clear();
+            GlobalVariables.grid2.Children.Clear();
 
             //sort events based on countdown
             GlobalVariables.myEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
             GlobalVariables.storedEvents.Sort((x, y) => x.getDate().CompareTo(y.getDate()));
 
             //add events to grid
-            int row = 0;
+            row = 0;
             int myEventsIndex = 0;
             int storedEventsIndex = 0;
             Event currentEvent;
@@ -479,88 +475,18 @@ namespace CountdownCollection {
                     continue;
                 }
 
-                addEventToGrid(currentEvent, row++);
+                currentEvent.setRow(row++);
+
+                currentEvent.addEventToGrid();
                 //Debug.WriteLine("Added " + currentEvent.getName() + " to grid");
             }
 
-            populatingGrid = false;
-        }
-
-        public void addEventToGrid(Event currentEvent, int row) {
-            //Debug.WriteLine("Adding " + currentEvent.getName() + " to grid");
-
-            DateTime date = currentEvent.getDate();
-            double value = Math.Min(1, ((date - DateTime.Now).TotalHours) / 8760.0); //for color shade
-            int botPad = 6;
-            int topPad = 4;
-
-            //components of row
-            Label eventLabel = new Label();
-            Label dateLabel = new Label();
-            Label countdown = new Label();
-            BoxView backColor = new BoxView();
-            BoxView yearFraction = new BoxView();
-            BoxView backColor2 = new BoxView();
-            StackLayout stack = new StackLayout();
-
-            eventLabel.FontSize = eventFontSize;
-            eventLabel.Text = currentEvent.getName();
-            eventLabel.HorizontalTextAlignment = TextAlignment.Center;
-            eventLabel.LineBreakMode = LineBreakMode.TailTruncation;
-            eventLabel.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            eventLabel.FontAttributes = FontAttributes.Bold;
-            eventLabel.TextColor = Color.FromRgb(1.0, 1.0, (60.0 / 255.0) * (value));
-
-            dateLabel.FontSize = dateFontSize;
-            dateLabel.Text = currentEvent.getDate().ToString("D");
-            dateLabel.LineBreakMode = LineBreakMode.TailTruncation;
-            dateLabel.HorizontalOptions = LayoutOptions.CenterAndExpand;
-            dateLabel.FontAttributes = FontAttributes.Bold;
-            dateLabel.TextColor = Color.White;
-
-            countdown.SetBinding(Label.TextProperty, "Countdown");
-            countdown.BindingContext = currentEvent;
-            countdown.FontSize = countdownFontSize;
-            countdown.TextColor = Color.White;
-            countdown.HorizontalOptions = LayoutOptions.End;
-            countdown.VerticalOptions = LayoutOptions.Center;
-            countdown.Margin = new Thickness(0, 0, 5, 0);
-            countdown.FontFamily = Device.RuntimePlatform == Device.iOS ? "alarm clock" : "Assets/Fonts/alarm clock.ttf#alarm clock";
-
-            backColor.Color = Color.FromRgb(0.0, 0.0, 220.0 / 255.0 - (220.0 / 255.0) * value);
-
-            yearFraction.Color = Color.FromRgb(1.0, 1.0, (60.0 / 255.0) * (value));
-            yearFraction.TranslationX = -(this.Width) + (this.Width) * fractionOfYear(currentEvent);
-            yearFraction.HeightRequest = 2;
-            yearFraction.VerticalOptions = LayoutOptions.End;
-
-            //set yellow border when event day is today
-            if (DateTime.Now.Day == currentEvent.getDate().Day && DateTime.Now.Month == currentEvent.getDate().Month && DateTime.Now.Year == currentEvent.getDate().Year) {
-                backColor2.WidthRequest = grid2.Width * fractionOfYear(currentEvent);
-                backColor2.Color = Color.FromRgb(1.0, 1.0, 0.0);
-                grid2.Children.Add(backColor2, 0, 2, row, row + 1);
-                backColor.Margin = new Thickness(2, 2, 2, 0);
-                botPad = 0;
-                topPad = 0;
+            GlobalVariables.grid2_realChildLocations = new List<int>();
+            for (int i = 0; i < row; i++) {
+                GlobalVariables.grid2_realChildLocations.Add((i + 1) * 5 - 1);
             }
 
-            //combine event and date labels into stacklayout
-            stack.Padding = new Thickness(0, topPad, 0, botPad);
-            stack.Spacing = 2;
-            stack.VerticalOptions = LayoutOptions.Center;
-            stack.Children.Add(eventLabel);
-            stack.Children.Add(dateLabel);
-
-            grid2.Children.Add(backColor, 0, 2, row, row + 1);
-            grid2.Children.Add(yearFraction, 0, 2, row, row + 1);
-            grid2.Children.Add(stack, 0, row);
-            grid2.Children.Add(countdown, 1, row);
-
-            //Debug.WriteLine(currentEvent.getName() + " added to grid");
-        }
-
-        public double fractionOfYear(Event currentEvent) {
-            return (365.0 - currentEvent.getDaysUntil()) / 365.0;
+            populatingGrid = false;
         }
     }
 }
