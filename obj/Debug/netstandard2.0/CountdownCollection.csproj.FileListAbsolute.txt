@@ -18,3 +18,4 @@ C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollecti
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.csproj.CopyComplete
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.dll
 C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.pdb
+C:\Users\Seth\Documents\Visual Studio 2017\CountdownCollection\CountdownCollection\CountdownCollection\obj\Debug\netstandard2.0\CountdownCollection.csprojAssemblyReference.cache

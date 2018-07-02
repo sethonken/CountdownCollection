@@ -227,14 +227,14 @@ namespace CountdownCollection {
                     else {
                         return Path.Combine(documentsPath, "StoredEvents.txt");
                     }
-                case Device.UWP:
-                    string root = ApplicationData.Current.LocalFolder.Path;
-                    if (temp) {
-                        return root + @"\StoredEvents_temp.txt";
-                    }
-                    else {
-                        return root + @"\StoredEvents.txt";
-                    }
+                //case Device.UWP:
+                //    string root = ApplicationData.Current.LocalFolder.Path;
+                //    if (temp) {
+                //        return root + @"\StoredEvents_temp.txt";
+                //    }
+                //    else {
+                //        return root + @"\StoredEvents.txt";
+                //    }
                 default:
                     return "";
             }
@@ -254,14 +254,14 @@ namespace CountdownCollection {
                     else {
                         return Path.Combine(documentsPath, "MyEvents.txt");
                     }
-                case Device.UWP:
-                    string root = ApplicationData.Current.LocalFolder.Path;
-                    if (temp) {
-                        return root + @"\MyEvents_temp.txt";
-                    }
-                    else {
-                        return root + @"\MyEvents.txt";
-                    }
+                //case Device.UWP:
+                //    string root = ApplicationData.Current.LocalFolder.Path;
+                //    if (temp) {
+                //        return root + @"\MyEvents_temp.txt";
+                //    }
+                //    else {
+                //        return root + @"\MyEvents.txt";
+                //    }
                 default:
                     return "";
             }

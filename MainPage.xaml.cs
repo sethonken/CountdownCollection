@@ -1,14 +1,11 @@
-﻿using Foundation;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-
+using UIKit;
 using Xamarin.Forms;
 
 namespace CountdownCollection {
@@ -181,7 +178,7 @@ namespace CountdownCollection {
                     while (animating) {
                         ;
                     }
-                    Thread.Sleep(80);
+                    Thread.Sleep(150);
                     while (populatingGrid) {
                         ;
                     }
@@ -319,30 +316,42 @@ namespace CountdownCollection {
         }
 
         public async void animateOpening() {
+            //wait for page height to be set
+            wait:
+            try {
+                while (Application.Current.MainPage.Height <= 0) {
+                    ;
+                }
+            } catch (Exception ex) {
+                goto wait;
+            }
+
             //set utilities padding size based on device
             switch (Device.RuntimePlatform) {
                 case Device.iOS:
-                    unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
-                    utilPaddingHeight = 20;
-                    //Debug.WriteLine("Device: " + NSProcessInfo.ProcessInfo.Environment["SIMULATOR_MODEL_IDENTIFIER"]);
-                    //switch (NSProcessInfo.ProcessInfo.Environment["SIMULATOR_MODEL_IDENTIFIER"].ToString()) {
-                    //    case "iPhone6,1":
-                    //    case "iPhone8,4":
-                    //        GlobalVariables.dateFontSize = 10;
-                    //        GlobalVariables.countdownFontSize = 19;
-                    //        GlobalVariables.eventFontSize = 11;
-                    //        unitLabel.Text = String.Format("{0,7}{1,8}{2,7}{3,6}", "Days", "Hrs", "Mins", "Secs");
-                    //        utilPaddingHeight = 20;
-                    //        break;
-                    //    case "iPhone10,3":
-                    //        unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
-                    //        utilPaddingHeight = 40;
-                    //        break;
-                    //    default:
-                    //        unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
-                    //        utilPaddingHeight = 20;
-                    //        break;
-                    //}
+                    Debug.WriteLine("Device: " + Application.Current.MainPage.Height);
+                    switch (Application.Current.MainPage.Height) {
+                        case 568:
+                            //iPhone 5s, SE
+                            GlobalVariables.dateFontSize = 10;
+                            GlobalVariables.countdownFontSize = 19;
+                            GlobalVariables.eventFontSize = 11;
+                            unitLabel.Text = String.Format("{0,7}{1,8}{2,7}{3,6}", "Days", "Hrs", "Mins", "Secs");
+                            utilPaddingHeight = 20;
+                            break;
+                        case 812:
+                            //iPhone X
+                            unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
+                            utilPaddingHeight = 40;
+                            break;
+                        default:
+                            //667 iPhone 6, 6s, 7, 8
+                            //736 iPhone 6, 6s, 7, 8 Plus
+                            //1024 iPad 3
+                            unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,8}", "Days", "Hrs", "Mins", "Secs");
+                            utilPaddingHeight = 20;
+                            break;
+                    }
                     break;
                 default:
                     unitLabel.Text = String.Format("{0,8}{1,11}{2,10}{3,10}", "Days", "Hrs", "Mins", "Secs");
@@ -365,14 +374,6 @@ namespace CountdownCollection {
                 animationStack.Children.Add(logoGrid);
             });
 
-            tryagain:
-            try {
-                while (Bounds.Width <= 0) {
-                    ;
-                }
-            } catch (Exception ex) {
-                goto tryagain;
-            }
             double imageHeight = (405.0 / 3524.0) * (Bounds.Width);
             BoxView logoBackground = new BoxView() {
                 BackgroundColor = Color.FromRgb(0.0, 0.0, 220.0 / 255.0),

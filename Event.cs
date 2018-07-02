@@ -119,6 +119,10 @@ namespace CountdownCollection {
                 backColor.Margin = new Thickness(2, 2, 2, 2);
                 botPad = 2;
                 topPad = 0;
+                if (GlobalVariables.dateFontSize == 10) {
+                    backColor.Margin = new Thickness(2, 2, 2, -2);
+                    botPad = 0;
+                }
             }
             else {
                 backColor2.IsVisible = false;
@@ -144,10 +148,16 @@ namespace CountdownCollection {
                     backColor2.Color = Color.FromRgb(1.0, 1.0, 0.0);
                     backColor2.IsVisible = true;
                     backColor.Margin = new Thickness(2, 2, 2, 2);
+                    if (GlobalVariables.dateFontSize == 10) {
+                        backColor.Margin = new Thickness(2, 2, 2, -2);
+                    }
                 });
 
                 botPad = 2;
                 topPad = 0;
+                if (GlobalVariables.dateFontSize == 10) {
+                    botPad = 0;
+                }
             }
             else {
                 Device.BeginInvokeOnMainThread(() => {
@@ -157,6 +167,9 @@ namespace CountdownCollection {
 
                 botPad = 8;
                 topPad = 6;
+                if (GlobalVariables.dateFontSize == 10) {
+                    topPad = 8;
+                }
             }
 
             Device.BeginInvokeOnMainThread(() => {
@@ -198,6 +211,10 @@ namespace CountdownCollection {
             //combine event and date labels into stacklayout
             stack.Padding = new Thickness(0, topPad, 0, botPad);
             stack.Spacing = 1;
+            if (GlobalVariables.dateFontSize == 10) {
+                topPad = 8;
+                stack.Spacing = 0;
+            }
             stack.VerticalOptions = LayoutOptions.Center;
             stack.Children.Add(eventLabel);
             stack.Children.Add(dateLabel);

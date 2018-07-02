@@ -46,12 +46,13 @@ namespace CountdownCollection {
         }
 
         public async void populateGrids() {
-            Device.BeginInvokeOnMainThread(() => {
-                displaySelectingIndicator();
-            });
+            displaySelectingIndicator();
 
             await Task.Run(() => {
-                Thread.Sleep(300);
+                while (scrollView.Content != selectingIndicator) {
+                    ;
+                }
+                Thread.Sleep(200);
                 Device.BeginInvokeOnMainThread(() => {
                     populateStoredEventsGrid();
                     populateMyEventsGrid();
@@ -251,7 +252,7 @@ namespace CountdownCollection {
                 restoreDefaultsButton.IsVisible = true;
 
                 await Task.Run(() => {
-                    Thread.Sleep(100);
+                    Thread.Sleep(300);
                     Device.BeginInvokeOnMainThread(() => {
                         scrollView.Content = storedEventsGrid;
                     });
@@ -284,7 +285,7 @@ namespace CountdownCollection {
                 });
 
                 await Task.Run(() => {
-                    Thread.Sleep(100);
+                    Thread.Sleep(300);
                     Device.BeginInvokeOnMainThread(() => {
                         scrollView.Content = myEventsGrid;
                     });
